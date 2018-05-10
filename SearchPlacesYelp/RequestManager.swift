@@ -12,12 +12,14 @@ import Alamofire
 class RequestManager {
     
     var delegate: RequestManagerDelegate?
+    var places: [Place]?
     
-    func getRequest(url: URL?) -> () {
+    func getRequest(url: URL?, parameters: Parameters?, headers: HTTPHeaders?) -> [Place]? {
         
-        if let urlValue = url {
-            delegate?.getRequest(url: urlValue)
+        if let urlValue = url, let parametersValue = parameters, let headersValue  = headers {
+            places = delegate?.getRequest(url: urlValue, parameters: parametersValue, headers: headersValue)
         }
+        return places
     }
     
     func postRequest(url: URL?, parameters: Parameters?, headers: HTTPHeaders?) -> () {
@@ -29,23 +31,29 @@ class RequestManager {
 }
 
 protocol RequestManagerDelegate {
-    func getRequest(url: URL)
+    func getRequest(url: URL, parameters: Parameters, headers: HTTPHeaders) -> [Place]?
     func postRequest(url: URL, parameters: Parameters, headers: HTTPHeaders)
 }
 
 class RequestAlamofireDelegate: RequestManagerDelegate {
+    
+    var places: [Place]?
 
-    func getRequest(url: URL) {
+    func getRequest(url: URL, parameters: Parameters, headers: HTTPHeaders) -> [Place]? {
         
-        request(url).validate().responseJSON { responsejs in
+        request(url, parameters: parameters, headers: headers).responseJSON { responsejs in
             switch responsejs.result {
             case .success(let value):
-                print(value)
+                let businesses = value as? [String: Any]
+                let array = businesses!["businesses"] as? Array<[String: Any]>
+                self.places = Place.getArray(from: array!)
                 
             case .failure(let error):
                 print(error)
+                break
             }
         }
+        return places
     }
     
     func postRequest(url: URL, parameters: Parameters, headers: HTTPHeaders) {
@@ -64,8 +72,11 @@ class RequestAlamofireDelegate: RequestManagerDelegate {
 
 class RequestURLSessionDelegate: RequestManagerDelegate {
     
-    func getRequest(url: URL) {
-
+    var places: [Place]?
+    
+    func getRequest(url: URL, parameters: Parameters, headers: HTTPHeaders) -> [Place]? {
+        
+        
         let request = URLRequest(url: url)
         
         let session = URLSession(configuration: URLSessionConfiguration.default)
@@ -77,24 +88,22 @@ class RequestURLSessionDelegate: RequestManagerDelegate {
                 return
             }
             
-            guard let responseData = data else {
+            guard let data = data else {
                 print("Error: did not receive data")
                 return
             }
             
             do {
-                guard (try JSONSerialization.jsonObject(with: responseData, options: [])
-                    as? [[String: AnyObject]]) != nil else {
-                        print("error")
-                        return
+                if let json = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] {
+                    let array = json["businesses"] as? Array<[String: Any]>
+                    self.places = Place.getArray(from: array!)
                 }
-                
-            } catch  {
-                print("error trying to convert data to JSON")
-                return
+            } catch let error {
+                print(error)
             }
         }
         task.resume()
+        return places
     }
     
     func postRequest(url: URL, parameters: Parameters, headers: HTTPHeaders) {

@@ -14,6 +14,7 @@
 		7733B58D209B48360036EA8F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 7733B58C209B48360036EA8F /* Assets.xcassets */; };
 		7733B590209B48360036EA8F /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 7733B58E209B48360036EA8F /* LaunchScreen.storyboard */; };
 		7733B598209B51A70036EA8F /* YelpManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7733B597209B51A70036EA8F /* YelpManager.swift */; };
+		7779FCB920A0581400751547 /* MapKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7779FCB820A0581400751547 /* MapKit.framework */; };
 		778B235C209C5D8E00DFD9F1 /* RequestManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 778B235B209C5D8D00DFD9F1 /* RequestManager.swift */; };
 		778B235E209C73CE00DFD9F1 /* Place.swift in Sources */ = {isa = PBXBuildFile; fileRef = 778B235D209C73CE00DFD9F1 /* Place.swift */; };
 /* End PBXBuildFile section */
@@ -28,6 +29,7 @@
 		7733B58F209B48360036EA8F /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		7733B591209B48360036EA8F /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		7733B597209B51A70036EA8F /* YelpManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YelpManager.swift; sourceTree = "<group>"; };
+		7779FCB820A0581400751547 /* MapKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MapKit.framework; path = System/Library/Frameworks/MapKit.framework; sourceTree = SDKROOT; };
 		778B235B209C5D8D00DFD9F1 /* RequestManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RequestManager.swift; sourceTree = "<group>"; };
 		778B235D209C73CE00DFD9F1 /* Place.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Place.swift; sourceTree = "<group>"; };
 		903834D9B9CF0F9100A767FC /* Pods_SearchPlacesYelp.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_SearchPlacesYelp.framework; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -39,6 +41,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				7779FCB920A0581400751547 /* MapKit.framework in Frameworks */,
 				5432F4D890E4BC26CCC2EB5E /* Pods_SearchPlacesYelp.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -58,6 +61,7 @@
 		413CD79D954A0EB4E56378CA /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				7779FCB820A0581400751547 /* MapKit.framework */,
 				903834D9B9CF0F9100A767FC /* Pods_SearchPlacesYelp.framework */,
 			);
 			name = Frameworks;
@@ -131,6 +135,11 @@
 				TargetAttributes = {
 					7733B581209B48350036EA8F = {
 						CreatedOnToolsVersion = 9.3;
+						SystemCapabilities = {
+							com.apple.Maps.iOS = {
+								enabled = 1;
+							};
+						};
 					};
 				};
 			};
