@@ -12,14 +12,12 @@ import Alamofire
 class RequestManager {
     
     var delegate: RequestManagerDelegate?
-    var places: [Place]?
     
-    func getRequest(url: URL?, parameters: Parameters?, headers: HTTPHeaders?) -> [Place]? {
+    func getRequest(url: URL?, parameters: Parameters?, headers: HTTPHeaders?, completionHandler: @escaping ([Place]?)-> Void) -> () {
         
         if let urlValue = url, let parametersValue = parameters, let headersValue  = headers {
-            places = delegate?.getRequest(url: urlValue, parameters: parametersValue, headers: headersValue)
+            delegate?.getRequest(url: urlValue, parameters: parametersValue, headers: headersValue, completionHandler: { place in completionHandler(place) })
         }
-        return places
     }
     
     func postRequest(url: URL?, parameters: Parameters?, headers: HTTPHeaders?) -> () {
@@ -31,29 +29,31 @@ class RequestManager {
 }
 
 protocol RequestManagerDelegate {
-    func getRequest(url: URL, parameters: Parameters, headers: HTTPHeaders) -> [Place]?
+    
+    func getRequest(url: URL, parameters: Parameters, headers: HTTPHeaders, completionHandler: @escaping ([Place]?)-> Void)
     func postRequest(url: URL, parameters: Parameters, headers: HTTPHeaders)
 }
 
 class RequestAlamofireDelegate: RequestManagerDelegate {
-    
-    var places: [Place]?
 
-    func getRequest(url: URL, parameters: Parameters, headers: HTTPHeaders) -> [Place]? {
+    func getRequest(url: URL, parameters: Parameters, headers: HTTPHeaders, completionHandler: @escaping ([Place]?)-> Void) {
         
         request(url, parameters: parameters, headers: headers).responseJSON { responsejs in
+            
+            var places: [Place]?
             switch responsejs.result {
             case .success(let value):
+                
                 let businesses = value as? [String: Any]
                 let array = businesses!["businesses"] as? Array<[String: Any]>
-                self.places = Place.getArray(from: array!)
+                places = Place.getArray(from: array!)
+                completionHandler(places)
                 
             case .failure(let error):
                 print(error)
-                break
+                completionHandler(nil)
             }
         }
-        return places
     }
     
     func postRequest(url: URL, parameters: Parameters, headers: HTTPHeaders) {
@@ -72,9 +72,8 @@ class RequestAlamofireDelegate: RequestManagerDelegate {
 
 class RequestURLSessionDelegate: RequestManagerDelegate {
     
-    var places: [Place]?
     
-    func getRequest(url: URL, parameters: Parameters, headers: HTTPHeaders) -> [Place]? {
+    func getRequest(url: URL, parameters: Parameters, headers: HTTPHeaders, completionHandler: @escaping ([Place]?)-> Void) {
         
         
         let request = URLRequest(url: url)
@@ -82,6 +81,8 @@ class RequestURLSessionDelegate: RequestManagerDelegate {
         let session = URLSession(configuration: URLSessionConfiguration.default)
         let task = session.dataTask(with: request) {
             (data, response, error) in
+            
+            var places: [Place]?
             
             guard error == nil else {
                 print("error calling GET")
@@ -96,14 +97,14 @@ class RequestURLSessionDelegate: RequestManagerDelegate {
             do {
                 if let json = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] {
                     let array = json["businesses"] as? Array<[String: Any]>
-                    self.places = Place.getArray(from: array!)
+                    places = Place.getArray(from: array!)
                 }
             } catch let error {
                 print(error)
             }
+            completionHandler(places)
         }
         task.resume()
-        return places
     }
     
     func postRequest(url: URL, parameters: Parameters, headers: HTTPHeaders) {

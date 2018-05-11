@@ -19,28 +19,31 @@ class ViewController: UIViewController, CLLocationManagerDelegate, UISearchBarDe
     let requestAlamofireDelegate = RequestAlamofireDelegate()
     let requestURLDelagate = RequestURLSessionDelegate()
     let yelpManager = YelpManager()
+    
     var places:[Place]?
     
 
     override func viewDidLoad() {
         
         super.viewDidLoad()
+        
         locationManager.delegate = self
         locationManager.requestWhenInUseAuthorization()
-        locationManager.requestLocation()
-        locationManager.startUpdatingLocation()
         searchBar.delegate = self
         requestManager.delegate = requestAlamofireDelegate
-    }
     
-    func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
         
-        print("text did change")
+        if CLLocationManager.locationServicesEnabled() {
+            
+            locationManager.requestLocation()
+        }
     }
     
     var location: String?
     
     func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
+        
+        searchBar.resignFirstResponder()
         
         let url = URL(string: yelpManager.urlString)
         var parameters = yelpManager.parameters
@@ -62,18 +65,22 @@ class ViewController: UIViewController, CLLocationManagerDelegate, UISearchBarDe
                 
                 parameters["latitude"] = "\(String(describing: locationManager.location!.coordinate.latitude))"
                 parameters["longitude"] = "\(String(describing: locationManager.location!.coordinate.longitude))"
+                
             }
             else {
-                
                 parameters["location"] = location
             }
         }
         
-        if let request = requestManager.getRequest(url: url, parameters: parameters, headers: headers) {
-            
-            places = request
-            mapView.addAnnotations(places!)
-        }
+        requestManager.getRequest(url: url, parameters: parameters, headers: headers, completionHandler: { place in
+            self.places = place
+            self.mapView.showAnnotations(self.places!, animated: true)
+        } )
+    }
+    
+    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+    
+        print(locations)
     }
     
     func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
@@ -81,12 +88,6 @@ class ViewController: UIViewController, CLLocationManagerDelegate, UISearchBarDe
         if status == .authorizedWhenInUse {
             locationManager.requestLocation()
         }
-    }
-    
-    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-        
-        print(locations)
-        //mapView.centerCoordinate = (locations.last?.coordinate)!
     }
     
     func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
