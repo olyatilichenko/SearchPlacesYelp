@@ -43,14 +43,13 @@ class RequestAlamofireDelegate: RequestManagerDelegate {
             var places: [Place]?
             switch responsejs.result {
             case .success(let value):
-                
-                let businesses = value as? [String: Any]
-                let array = businesses!["businesses"] as? Array<[String: Any]>
-                places = Place.getArray(from: array!)
-                completionHandler(places)
+                if let businesses = value as? [String: Any] {
+                    places = Place.getPlaces(from: businesses)
+                    completionHandler(places)
+                }
                 
             case .failure(let error):
-                print(error)
+                print(error.localizedDescription)
                 completionHandler(nil)
             }
         }
@@ -64,7 +63,7 @@ class RequestAlamofireDelegate: RequestManagerDelegate {
                 print(value)
                 
             case .failure(let error):
-                print(error)
+                print(error.localizedDescription)
             }
         }
     }
@@ -72,9 +71,7 @@ class RequestAlamofireDelegate: RequestManagerDelegate {
 
 class RequestURLSessionDelegate: RequestManagerDelegate {
     
-    
     func getRequest(url: URL, parameters: Parameters, headers: HTTPHeaders, completionHandler: @escaping ([Place]?)-> Void) {
-        
         
         let request = URLRequest(url: url)
         
@@ -85,7 +82,7 @@ class RequestURLSessionDelegate: RequestManagerDelegate {
             var places: [Place]?
             
             guard error == nil else {
-                print("error calling GET")
+                print(error!.localizedDescription as Any)
                 return
             }
             
@@ -96,11 +93,10 @@ class RequestURLSessionDelegate: RequestManagerDelegate {
             
             do {
                 if let json = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] {
-                    let array = json["businesses"] as? Array<[String: Any]>
-                    places = Place.getArray(from: array!)
+                    places = Place.getPlaces(from: json)
                 }
             } catch let error {
-                print(error)
+                print(error.localizedDescription)
             }
             completionHandler(places)
         }
@@ -116,7 +112,7 @@ class RequestURLSessionDelegate: RequestManagerDelegate {
         do {
             request.httpBody = try JSONSerialization.data(withJSONObject: parameters, options: [])
         } catch let error {
-            print(error)
+            print(error.localizedDescription)
         
         }
         request.allHTTPHeaderFields = headers
@@ -125,7 +121,7 @@ class RequestURLSessionDelegate: RequestManagerDelegate {
             (data, response, error) in
             
             guard error == nil else {
-                print("error calling POST")
+                print(error!.localizedDescription)
                 return
             }
             
@@ -138,7 +134,7 @@ class RequestURLSessionDelegate: RequestManagerDelegate {
                     print(json)
                 }
             } catch let error {
-                print(error)
+                print(error.localizedDescription)
             }
         }
         task.resume()

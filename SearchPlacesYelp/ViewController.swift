@@ -19,10 +19,11 @@ class ViewController: UIViewController, CLLocationManagerDelegate, UISearchBarDe
     let requestAlamofireDelegate = RequestAlamofireDelegate()
     let requestURLDelagate = RequestURLSessionDelegate()
     let yelpManager = YelpManager()
+    var location: String?
+    var coordinate: CLLocationCoordinate2D?
     
     var places:[Place]?
     
-
     override func viewDidLoad() {
         
         super.viewDidLoad()
@@ -31,15 +32,12 @@ class ViewController: UIViewController, CLLocationManagerDelegate, UISearchBarDe
         locationManager.requestWhenInUseAuthorization()
         searchBar.delegate = self
         requestManager.delegate = requestAlamofireDelegate
-    
-        
+
         if CLLocationManager.locationServicesEnabled() {
             
-            locationManager.requestLocation()
+            locationManager.startUpdatingLocation()
         }
     }
-    
-    var location: String?
     
     func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
         
@@ -49,38 +47,31 @@ class ViewController: UIViewController, CLLocationManagerDelegate, UISearchBarDe
         var parameters = yelpManager.parameters
         let headers = yelpManager.headers
         
-        if (searchBar.text?.first != "#") {
-            
-            location = searchBar.text
-            parameters["location"] = location
-        }
-        
-        if (searchBar.text?.first == "#") {
+        if searchBar.text?.first == "#" {
             
             var text = searchBar.text
             text?.removeFirst(1)
             parameters["term"] = text
             
             if location == nil {
-                
-                parameters["latitude"] = "\(String(describing: locationManager.location!.coordinate.latitude))"
-                parameters["longitude"] = "\(String(describing: locationManager.location!.coordinate.longitude))"
-                
-            }
-            else {
+                guard self.coordinate == nil else {
+                    parameters["latitude"] = "\(String(describing: self.coordinate?.latitude))"
+                    parameters["longitude"] = "\(String(describing: self.coordinate?.longitude))"
+                    return
+                }
+            } else {
                 parameters["location"] = location
             }
+            
+        } else {
+            self.location = searchBar.text
+            parameters["location"] = location
         }
         
         requestManager.getRequest(url: url, parameters: parameters, headers: headers, completionHandler: { place in
-            self.places = place
-            self.mapView.showAnnotations(self.places!, animated: true)
+                self.places = place
+                self.mapView.showAnnotations(self.places!, animated: true)
         } )
-    }
-    
-    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-    
-        print(locations)
     }
     
     func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
@@ -88,11 +79,29 @@ class ViewController: UIViewController, CLLocationManagerDelegate, UISearchBarDe
         if status == .authorizedWhenInUse {
             locationManager.requestLocation()
         }
+        if status == .denied || status == .restricted {
+            showAlert()
+        }
+    }
+    
+    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+        if let userLocation: CLLocation = locations.last {
+            self.coordinate = userLocation.coordinate
+        }
     }
     
     func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
-        
-        print("error:: (error)")
+        print(error.localizedDescription)
+        showAlert()
+    }
+    
+    func showAlert(){
+        locationManager.stopUpdatingLocation()
+        let alert = UIAlertController(title: "Settings", message: "Allow location from settings", preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "Ok", style: .default, handler: { action in
+            UIApplication.shared.open(URL(string: UIApplicationOpenSettingsURLString)! as URL)
+        }))
+        self.present(alert, animated: true, completion: nil)
     }
 }
 

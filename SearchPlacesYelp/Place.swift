@@ -32,13 +32,15 @@ class Place: NSObject, MKAnnotation {
         self.coordinate = coordinate
     }
     
-    static func getArray(from array: Array<[String: Any]>) -> [Place]? {
-
-        var places: [Place] = []
+    static func getPlaces(from array: [String: Any]) -> [Place]? {
         
-        for jsonObject in array {
-            if let place = Place(json: jsonObject) {
-                places.append(place)
+        var places: [Place] = []
+
+        if let json = array["businesses"] as? Array<[String: Any]> {
+            for jsonObject in json {
+                if let place = Place(json: jsonObject) {
+                    places.append(place)
+                }
             }
         }
         return places
